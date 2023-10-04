@@ -1,13 +1,13 @@
 services:
 # levantar docker
-  granja_inventory: 
+  inventory: 
     build: .
     ports:
       - "5003:80"
     volumes:
       - .:/code
     links:
-      - granja_inventory_mongodb
+      - inventory_mongodb
   
   # granja_inventory_events_receiver_02:
   #   build: .
@@ -18,15 +18,17 @@ services:
   #   command: python3 events.py
 
   #levanta mongo
-  granja_inventory_mongodb:
+  inventory_mongodb:
     image: mongo:5.0
+    ports:
+      - "5010:27017"
     volumes:
-      - granja_inventory_mongodb_container:/data/db
+      - inventory_mongodb_container:/data/db
     logging:
         driver: none
 
 volumes:
-  granja_inventory_mongodb_container:
+  inventory_mongodb_container:
 
 # networks:
 #   default:

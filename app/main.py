@@ -5,8 +5,9 @@ import logging
 import threading
 from pymongo import MongoClient
 from bson.objectid import ObjectId
-
+from bson.errors import InvalidId
 from fastapi import FastAPI, Query
+from fastapi import HTTPException
 from pydantic import BaseModel
 
 from .events import Emit
@@ -23,28 +24,28 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
 
 
-class Gold(BaseModel):
-    id: str | None = None
-    name: str = "Gold"
-    quantity: int = 0
-    description: str = "To buy stuff"
-    class Config:
-        schema_extra = {
-            "example": {
-                "id": "666",
-                "name": "Oro",
-                "quantity": 4500,
-                "description":  "To buy stuff"
-            }
-        }
+# class Gold(BaseModel):
+#     id: str | None = None
+#     name: str = "Gold"
+#     quantity: int = 0
+#     description: str = "To buy stuff"
+#     class Config:
+#         schema_extra = {
+#             "example": {
+#                 "id": "666",
+#                 "name": "Oro",
+#                 "quantity": 4500,
+#                 "description":  "To buy stuff"
+#             }
+#         }
     
-class Seed(BaseModel):
+class Item(BaseModel):
     id: str | None = None
     name: str = ""
-    buy_price: int
-    sell_price: int
-    quantity: int = 1
-    description: str = "Plant it on your farm!"
+    buy_price: int | None = None
+    sell_price: int | None = None
+    quantity: int | None = 1
+    description: str = "stuff!!"
     class Config:
         schema_extra = {
             "example": {
@@ -60,8 +61,8 @@ class Seed(BaseModel):
 class User(BaseModel):
     id: str | None = None
     name: str = "Player"
-    gold: Gold = Gold()
-    seeds: list[Seed]
+    gold: int = 0
+    items: list[Item]=[]
     class Config:
         schema_extra = {
             "example": {
@@ -69,6 +70,10 @@ class User(BaseModel):
                 "name": "Facundo"
             }
         }
+    def __init__(self, **kargs):
+        if "_id" in kargs:
+            kargs["id"] = str(kargs["_id"])
+        BaseModel.__init__(self, **kargs)        
 
 
 class Plantation(BaseModel):
@@ -85,10 +90,6 @@ class Collectable(BaseModel):
     quantity: int = 1
     description: str = ""
 
-
-
-
-
 class Fertilizer(BaseModel):
     id: str | None = None
     name: str = "Fertilizer"
@@ -101,10 +102,10 @@ class Fertilizer(BaseModel):
 @app.get("/")
 async def root():
     return {"Hello": "World"}
-
+#----------------------------------------------------------------------USER CRUD---------------------------------------------
 @app.post("/newuser/{user_name}")
 def add_user(user_name: str) -> User:
-    user : User(name=user_name)
+    user = User(name=user_name, gold=1000)
     inserted_id = mongodb_client.inventory.users.insert_one(
         user.dict()
     ).inserted_id
@@ -117,9 +118,56 @@ def add_user(user_name: str) -> User:
 
     #logging.info(f"✨ New team created: {new_team}")
     #emit_events.send(inserted_id, "create", new_team.dict())
-
     return new_user
 
+@app.get("/getuser/{user_id}")
+def get_user(user_id: str)-> User:
+    try:
+        user_id = ObjectId(user_id)
+        return User(
+            **mongodb_client.inventory.users.find_one({"_id": user_id})
+        )
+    except (InvalidId, TypeError):
+        raise HTTPException(status_code=404, detail="Player not found")
+#--------------------------------------------------------------------------Shop----------------------------------------------------------
+@app.post("/newitem")
+def add_item(item: Item) -> Item:
+    inserted_id = mongodb_client.inventory.shop.insert_one(
+        item.dict()
+    ).inserted_id
+
+
+    new_item = Item(
+        **mongodb_client.inventory.shop.find_one(
+            {"_id": ObjectId(inserted_id)}
+        )
+    )
+
+    #logging.info(f"✨ New team created: {new_team}")
+    #emit_events.send(inserted_id, "create", new_team.dict())
+    return new_item
+
+@app.post("/{user_id}/{item_id}/{quantity}")
+def add_item_to_user(user_id: str) -> User:
+    #revisar si tiene 
+    new_user=get_user(user_id)
+    #si ya lo tiene sumar la cantidad
+    #si no lo tiene agregar a items
+    # user = User(name=user_name, gold=1000)
+    # inserted_id = mongodb_client.inventory.users.insert_one(
+    #     user.dict()
+    # ).inserted_id
+
+    # new_user = User(
+    #     **mongodb_client.inventory.users.find_one(
+    #         {"_id": ObjectId(inserted_id)}
+    #     )
+    # )
+
+    #logging.info(f"✨ New team created: {new_team}")
+    #emit_events.send(inserted_id, "create", new_team.dict())
+
+    return new_user
 
 @app.get("/{user_id}/plants", response_model=list[Plantation])
 async def get_inventory(user_id: str) -> list[Plantation]:
