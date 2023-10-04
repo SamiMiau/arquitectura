@@ -65,34 +65,11 @@ class User(BaseModel):
         BaseModel.__init__(self, **kargs)        
 
 
-# class Plantation(BaseModel):
-#     name: str
-#     # tomato = 'Tomato'
-#     # sunflower = 'Sunflower'
-#     # default = 'no name'
-
-# class Collectable(BaseModel):
-#     id: str | None = None
-#     name: Plantation = Plantation(name = "no name")
-#     buy_price: int
-#     sell_price: int
-#     quantity: int = 1
-#     description: str = ""
-
-# class Fertilizer(BaseModel):
-#     id: str | None = None
-#     name: str = "Fertilizer"
-#     buy_price: int
-#     sell_price: int
-#     quantity: int = 1
-#     description: str = "To grow stuff faster"
-
-
 @app.get("/")
 async def root():
     return {"Hello": "World"}
 #----------------------------------------------------------------------USER CRUD---------------------------------------------
-@app.post("/newuser/{user_name}")
+@app.post("/newuser/{user_name}", response_model=User)
 def add_user(user_name: str) -> User:
     user = User(name=user_name, gold=1000)
     inserted_id = mongodb_client.inventory.users.insert_one(
@@ -109,7 +86,7 @@ def add_user(user_name: str) -> User:
     #emit_events.send(inserted_id, "create", new_team.dict())
     return new_user
 
-@app.get("/getuser/{user_id}")
+@app.get("/getuser/{user_id}", response_model=User)
 def get_user(user_id: str)-> User:
     try:
         user_id = ObjectId(user_id)
@@ -121,7 +98,7 @@ def get_user(user_id: str)-> User:
 
 
 #--------------------------------------------------------------------------Shop----------------------------------------------------------
-@app.post("/newitem")
+@app.post("/newitem", response_model=Item)
 def add_item(item: Item) -> Item:
     inserted_id = mongodb_client.inventory.shop.insert_one(
         item.dict()
@@ -139,7 +116,7 @@ def add_item(item: Item) -> Item:
     #emit_events.send(inserted_id, "create", new_team.dict())
     return new_item
 
-@app.get("/getitem/{item_id}")
+@app.get("/getitem/{item_id}", response_model=Item)
 def get_item(item_id: str)-> Item:
     try:
         item_id = ObjectId(item_id)
@@ -149,8 +126,8 @@ def get_item(item_id: str)-> Item:
     except (InvalidId, TypeError):
         raise HTTPException(status_code=404, detail="Item not found")
     
-@app.put("/updateitem/{item_id}")
-def update_item(item_id: str, item: dict):
+@app.put("/updateitem/{item_id}", response_model=Item)
+def update_item(item_id: str, item: dict)-> Item:
     try:
         item_id = ObjectId(item_id)
         mongodb_client.inventory.shop.update_one(
@@ -165,8 +142,8 @@ def update_item(item_id: str, item: dict):
     except (InvalidId, TypeError):
         raise HTTPException(status_code=404, detail="Item not found")
     
-@app.delete("/deleteitem/{item_id}")
-def delete_item(item_id: str):
+@app.delete("/deleteitem/{item_id}", response_model=str)
+def delete_item(item_id: str) -> str:
     try:
         item_id = ObjectId(item_id)
         item = Item(
@@ -180,11 +157,12 @@ def delete_item(item_id: str):
     )
 
     #emit_events.send(player_id, "delete", player.dict())
-    return item
+    return 'ok'
 #--------------------------------------------------------------------------Functionalities----------------------------------------------------------
 #updates the items of a user, new_items is a list of Item
-@app.put("/updateuseritems/{user_id}")
+@app.put("/updateuseritems/{user_id}", response_model=User)
 def update_user_items(user_id: str, new_items: list[dict]) -> User: 
+    print(new_items)
     try:
         user_id = ObjectId(user_id)
         mongodb_client.inventory.users.update_one(
@@ -200,95 +178,74 @@ def update_user_items(user_id: str, new_items: list[dict]) -> User:
         raise HTTPException(status_code=404, detail="User not found")
     
 #adds a specific quantity of one item to one user
-@app.post("/{user_id}/{item_id}/{quantity}")
-def add_item_to_user(user_id: str, item_id: str, quantity:int):
+@app.post("/{user_id}/{item_id}/{quantity}", response_model=User)
+def add_item_to_user(user_id: str, item_id: str, quantity:int, action:int) -> User:
     user = get_user(user_id)
     old_items = user.items
-    added=False
+    print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+    print(old_items)
+    found = False
     for indice in range(len(old_items)):
         if old_items[indice].id == item_id: #si ya lo tiene, suma la cantidad
-            old_items[indice].quantity=old_items[indice].quantity+quantity
-            added=True
-        old_items[indice]=old_items[indice].__dict__
-    if not added: #si no lo tiene, lo agrega al final de la lista de items
-        new_item= get_item(item_id)
+            found=True
+            break
+    if found:
+        old_items[indice].quantity = old_items[indice].quantity + quantity*action
+            #old_items[indice]=old_items[indice].__dict__
+        if old_items[indice].quantity == 0:
+            old_items.pop(indice)
+        else:
+            old_items[indice]=old_items[indice].__dict__
+        
+    else: #si no lo tiene, lo agrega al final de la lista de items
+        new_item = get_item(item_id)
         new_item.quantity=quantity
-        new_item=new_item.__dict__
+        new_item = new_item.__dict__
         old_items.append(new_item)
-    user2 = update_user_items(user_id, old_items)
+    new=[]
+    for x in old_items:
+        x=x.__dict__
+        new.append(x)
+    user2 = update_user_items(user_id, new)
     return user2
 
 
 
-@app.get("/buy/{item_id}/{quantity}/{user_id}", response_model=int)
-async def buy(item_id: int, quantity: int, user_id: str) -> int:
+@app.post("/buy/{user_id}/{item_id}/{quantity}", response_model=int)
+async def buy(user_id: str, item_id: str, quantity: int) -> int:
     #sacar el costo de 1 item, calcular costo total compra
-    total_cost = quantity*get_precio(item_id)
+    total_cost = quantity*get_item(item_id).buy_price
     #revisar si el usuario tiene disponible ese dinero
-    if get_user_gold(user_id) < total_cost :
+    if get_user(user_id).gold < total_cost :
         #error no hay plata
         return 0
     else:
+        #agregar item
+        user = add_item_to_user(user_id, item_id, quantity,1)
+        #quitar dinero
+        new_gold = user.gold - total_cost
+        user_id = ObjectId(user_id)
+        mongodb_client.inventory.users.update_one(
+            {'_id': user_id}, {"$set": {'gold':new_gold}})
         return 1
 
-# @app.post("/add/{item_id}/{quantity}/{user_id}")
-# def add_item(item_id: int, quantity: int, user_id: str) -> int:
-#     #buscar al usuario y si no existe mandar error
-#     #si existe darle la cantidad pedida del item
-#     #editar log para que entregue toda la info
-#     logging.info(f"Item added: {quantity}")
-
-
-# # @app.get("/teams")
-# # def teams_all(id: list[int] = Query(None)):
-# #     filters = dict()
-# #     if id:
-# #         filters['_id'] = {"$in": [ObjectId(_id) for _id in id]}
-
-# #     teams = [Team(**team).dict()
-# #              for team in mongodb_client.service_02.teams.find(filters)]
-
-# #     return teams
-
-
-# # @app.get("/teams/{team_id}")
-# # def teams_get(team_id: str):
-# #     team = Team(
-# #         **mongodb_client.service_02.teams.find_one({"_id": ObjectId(team_id)})
-# #     ).dict()
-
-# #     return team
-
-
-# # @app.delete("/teams/{team_id}")
-# # def teams_delete(team_id: str):
-# #     team = Team(
-# #         **mongodb_client.service_02.teams.find_one({"_id": ObjectId(team_id)})
-# #     ).dict()
-
-# #     mongodb_client.service_02.teams.delete_one({"_id": ObjectId(team_id)})
-
-# #     emit_events.send(team_id, "delete", team.dict())
-
-# #     return team
-
-
-# # @app.post("/teams")
-# # def teams_create(team: Team):
-# #     # Make it slow
-# #     time.sleep(3)
-
-# #     inserted_id = mongodb_client.service_02.teams.insert_one(
-# #         team.dict()
-# #     ).inserted_id
-
-# #     new_team = Team(
-# #         **mongodb_client.service_02.teams.find_one(
-# #             {"_id": ObjectId(inserted_id)}
-# #         )
-# #     )
-
-# #     logging.info(f"✨ New team created: {new_team}")
-# #     emit_events.send(inserted_id, "create", new_team.dict())
-
-# #     return new_team
+@app.post("/sell/{user_id}/{item_id}/{quantity}", response_model=int)
+async def sell(user_id: str, item_id: str, quantity: int) -> int:
+    #revisar que tenga al menos quantity del item que quiere vender
+    user = get_user(user_id)
+    for item in user.items:
+        if item.id == item_id:
+            if quantity > item.quantity: #no hay suficiente cantidad
+                print('holi')
+                return 0
+            else:
+                #delete items from user's inventory
+                user = add_item_to_user(user_id, item_id, quantity,-1)
+                #add gold
+                price = quantity*get_item(item_id).sell_price
+                new_gold = user.gold + price
+                user_id = ObjectId(user_id)
+                mongodb_client.inventory.users.update_one(
+                    {'_id': user_id}, {"$set": {'gold':new_gold}})
+                return 1
+    return 0
