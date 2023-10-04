@@ -9,6 +9,13 @@ services:
     links:
       - inventory_mongodb
   
+  inventory_message_broker:
+    image: rabbitmq:3-management-alpine
+    ports:
+        - 5672:5672
+        - 15672:15672
+
+
   # granja_inventory_events_receiver_02:
   #   build: .
   #   volumes:
