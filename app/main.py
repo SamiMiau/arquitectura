@@ -71,6 +71,10 @@ async def root():
 #----------------------------------------------------------------------USER---------------------------------------------
 @app.post("/newuser/{user_name}", response_model=User, tags=["user"])
 def add_user(user_name: str) -> User:
+    """
+    Creates a new user with the given name \n
+    Returns the user created
+    """
     user = User(name=user_name, gold=1000)
     inserted_id = mongodb_client.inventory.users.insert_one(
         user.dict()
@@ -87,6 +91,10 @@ def add_user(user_name: str) -> User:
 
 @app.get("/getuser/{user_id}", response_model=User, tags=["user"])
 def get_user(user_id: str)-> User:
+    """
+    Finds the user with the given id \n
+    Returns the user
+    """
     try:
         user_id = ObjectId(user_id)
         return User(
@@ -97,12 +105,20 @@ def get_user(user_id: str)-> User:
 
 @app.get("/inventory", response_model=list[Item], tags=["user inventory"])
 def get_all_inventory(user_id: str)-> list[Item]:
+    """
+    Fetches all of the items a user has in their inventory \n
+    Returns a list of items
+    """
     user = get_user(user_id)
     items = user.items
     return items
 #--------------------------------------------------------------------------Shop----------------------------------------------------------
 @app.post("/newitem", response_model=Item, tags=["shop"])
 def add_item(item: Item) -> Item:
+    """
+    Creates a new user item \n
+    Returns the item created
+    """
     inserted_id = mongodb_client.inventory.shop.insert_one(
         item.dict()
     ).inserted_id
@@ -118,6 +134,10 @@ def add_item(item: Item) -> Item:
 
 @app.get("/market", response_model=list[Item], tags=["shop"])
 def get_all_items(id: list[int] = Query(None))-> list[Item]:
+    """
+    Fetches all of the items that exist (for now we assume all of the items are on the shop) \n
+    Returns a list of items
+    """
     filters = dict()
     if id:
         filters['_id'] = {"$in": [ObjectId(_id) for _id in id]}
@@ -129,6 +149,10 @@ def get_all_items(id: list[int] = Query(None))-> list[Item]:
 
 @app.get("/getitem/{item_id}", response_model=Item, tags=["items"])
 def get_item(item_id: str)-> Item:
+    """
+    Fetches an item with the given id \n
+    Returns the item
+    """
     try:
         item_id = ObjectId(item_id)
         return Item(
@@ -139,6 +163,10 @@ def get_item(item_id: str)-> Item:
     
 @app.put("/updateitem/{item_id}", response_model=Item, tags=["items"])
 def update_item(item_id: str, item: dict)-> Item:
+    """
+    Updates the item that corresponds with the given id and all of it's parameters  \n
+    Returns the item
+    """
     try:
         item_id = ObjectId(item_id)
         item = mongodb_client.inventory.shop.update_one(
@@ -156,6 +184,10 @@ def update_item(item_id: str, item: dict)-> Item:
     
 @app.delete("/deleteitem/{item_id}", response_model=str, tags=["items"])
 def delete_item(item_id: str) -> str:
+    """
+    Deletes an item with the given id from the shop (it doesn't delete it from players inventory. This could lead to errors and will later be fixed) \n
+    Returns ok if the delete was successful
+    """
     try:
         item_id = ObjectId(item_id)
         item = Item(
@@ -175,6 +207,10 @@ def delete_item(item_id: str) -> str:
 #updates the items of a user, new_items is a list of Item
 @app.put("/updateuseritems/{user_id}", response_model=User, tags=["user"])
 def update_user_items(user_id: str, new_items: list[dict]) -> User: 
+    """
+    Rewrites all of the items a user with the given id has on their inventory \n
+    Returns the user
+    """
     print(new_items)
     try:
         user_id = ObjectId(user_id)
@@ -195,6 +231,10 @@ def update_user_items(user_id: str, new_items: list[dict]) -> User:
 #adds a specific quantity of one item to one user
 @app.post("/{user_id}/{item_id}/{quantity}", response_model=User, tags=["user"])
 def add_item_to_user(user_id: str, item_id: str, quantity:int, action:int) -> User:
+    """
+    Adds the given quantity of an item to the user with the given id \n
+    Returns the user
+    """
     if quantity<=0:
         raise HTTPException(status_code=400, detail="Invalid quantity")
     else:
@@ -228,6 +268,10 @@ def add_item_to_user(user_id: str, item_id: str, quantity:int, action:int) -> Us
 
 @app.post("/buy/{user_id}/{item_id}/{quantity}", response_model=int, tags=["user actions"])
 async def buy(user_id: str, item_id: str, quantity: int) -> int:
+    """
+    If the user with the given id has enough gold deletes the gold needed for the buy and adds the item to their inventory \n
+    Returns 1 if the purchase was successful, 0 otherwise
+    """
     if quantity<=0:
         raise HTTPException(status_code=400, detail="Invalid quantity")
     else:
@@ -249,6 +293,10 @@ async def buy(user_id: str, item_id: str, quantity: int) -> int:
 
 @app.post("/sell/{user_id}/{item_id}/{quantity}", response_model=int, tags=["user actions"])
 async def sell(user_id: str, item_id: str, quantity: int) -> int:
+    """
+    If the user with the given id has enough of the item to complete the sale then deletes the required amount of the item from their inventory and adds the corresponding gold \n
+    Returns 1 if the sell was successful, 0 otherwise
+    """
     if quantity<=0:
         raise HTTPException(status_code=400, detail="Invalid quantity")
     else:
