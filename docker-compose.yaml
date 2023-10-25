@@ -1,5 +1,5 @@
 services:
-# levantar docker
+
   inventory: 
     build: .
     ports:
@@ -26,7 +26,6 @@ services:
   #     - demo_04_service_02_mongodb
   #   command: python3 events.py
 
-  #levanta mongo
   inventory_mongodb:
     image: mongo:5.0
     ports:
@@ -46,14 +45,14 @@ services:
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_AUTH_DISABLE_LOGIN_FORM=true
     # networks:
-    #   - app
+    #   - microsvcs
   loki:
     image: grafana/loki:latest
     ports:
       - 3100:3100
     command: -config.file=/etc/loki/local-config.yaml
     # networks:
-    #   - app
+    #   - microsvcs
   promtail:
     image:  grafana/promtail:latest
     container_name: promtail
@@ -65,11 +64,11 @@ services:
     depends_on:
       - loki
     # networks:
-    #   - app
+    #   - microsvcs
 volumes:
   inventory_mongodb_container:
 
-# networks:
-#   default:
-#     name: granja
-#     external: true
+networks:
+  default:
+    name: microsvcs
+    external: true
