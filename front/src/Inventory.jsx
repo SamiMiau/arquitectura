@@ -39,11 +39,23 @@ export default function Inventory() {
   } = useForm();
 
   const onSubmit = async data => {
-    const[header, content] = await command(data.text,data.user,"65410dac903e29f7a2e3b017");
+    const[header, content] = await command(data.text,data.user,data.user_name);
     setHeaderText(header)
     
-    setContentText(content)
-
+    if(header=="Your inventory 📦"){
+      console.log("uwu")
+      
+      let item_list = []
+      for(let i = 0; i < content.length; i++){
+        console.log(content[i])
+        item_list.push([content[i]["name"], content[i]["buy_price"], content[i]["sell_price"], content[i]["quantity"], content[i]["description"]])
+      }
+      console.log(item_list)
+    }
+    else{
+      
+    }
+    setContentText(JSON.stringify(content))
     toast({
       title: 'Submitted',
       status: 'success',
@@ -85,6 +97,15 @@ export default function Inventory() {
                       </Select>
                       <FormErrorMessage>
                         {errors.user && errors.user.message}
+                      </FormErrorMessage>
+                    </FormControl>
+                  </Box>
+                  <Box>
+                    <FormControl htmlFor="user_name" isRequired>
+                      <FormLabel>User name</FormLabel>
+                      <Input id="user_name" type="text" {...register('user_name')} />
+                      <FormErrorMessage>
+                        {errors.name && errors.name.message}
                       </FormErrorMessage>
                     </FormControl>
                   </Box>

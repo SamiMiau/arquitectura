@@ -1,12 +1,16 @@
 import axios from "axios"
 
 
-export async function command(text, user, user_id){
-    
-    if(text =="view inventory"){
+export async function command(text, user, user_name){
+    let user_id2 = await axios.get(`http://localhost:5003/getuserid/${user_name}`)
+    let user_id = user_id2.data
+    if(text =="sign in"){
+        
+    }
+    else if(text =="view inventory"){
         const inventory = await axios.get(`http://localhost:5003/inventory?user_id=${user_id}`)
         console.log(inventory.data)
-        return ["Your inventory 📦", JSON.stringify(inventory.data)]
+        return ["Your inventory 📦", inventory.data]
     }
     else if(text=="view shop"){
         const inventory = await axios.get(`http://localhost:5003/market`)

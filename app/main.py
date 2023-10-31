@@ -113,7 +113,19 @@ def get_user(user_id: str)-> User:
         )
     except (InvalidId, TypeError):
         raise HTTPException(status_code=404, detail="User not found")
-
+@app.get("/getuserid/{user_name}", response_model=str, tags=["user"])
+def get_userid(user_name: str)-> str:
+    """
+    Finds the user with the given name \n
+    Returns the user's id
+    """
+    try:
+        return User(
+            **mongodb_client.inventory.users.find_one({"name": user_name})
+        ).id
+    except (InvalidId, TypeError):
+        raise HTTPException(status_code=404, detail="User not found")
+    
 @app.get("/inventory", response_model=list[Item], tags=["user inventory"])
 def get_all_inventory(user_id: str)-> list[Item]:
     """
