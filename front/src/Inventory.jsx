@@ -18,14 +18,18 @@ import {
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Layout } from './layout/Layout';
+import { command } from './commander';
 // import { useMutation } from '@apollo/client';
 
 // import { CREATE_TEAM } from '../api/teams';
 
-export default function NewTeam() {
+export default function Inventory() {
   //const [createTeam, { loading }] =
   //  useMutation(CREATE_TEAM);
 
+
+  const [headerText, setHeaderText] = React.useState("")
+  const [contentText, setContentText] = React.useState("")
   const toast = useToast();
 
   const {
@@ -34,14 +38,11 @@ export default function NewTeam() {
     formState: { errors },
   } = useForm();
 
-  const onSubmit = data => {
-    // createTeam({
-    //   variables: {
-    //     name: data.name,
-    //     country: data.country,
-    //     description: data.description,
-    //   },
-    // });
+  const onSubmit = async data => {
+    const[header, content] = await command(data.text,data.user,"6540555864259e2dc2ba899b");
+    setHeaderText(header)
+    
+    setContentText(content)
 
     toast({
       title: 'Submitted',
@@ -57,7 +58,10 @@ export default function NewTeam() {
         <Stack spacing={8} mx={'auto'} py={12} px={6}>
           <Stack align={'center'}>
             <Heading fontSize={'4xl'} textAlign={'center'}>
-              Nuevo equipo ✌️
+              Enter a command to build your dream farm!!🌱
+            </Heading>
+            <Heading fontSize={'1xl'} textAlign={'center'}>
+              If you need help enter "info" in the chat
             </Heading>
           </Stack>
           <form onSubmit={handleSubmit(onSubmit)}>
@@ -70,42 +74,31 @@ export default function NewTeam() {
               <Stack spacing={4}>
                 <HStack>
                   <Box>
-                    <FormControl htmlFor="name" isRequired>
-                      <FormLabel>Nombre</FormLabel>
-                      <Input id="name" type="text" {...register('name')} />
-                      <FormErrorMessage>
-                        {errors.name && errors.name.message}
-                      </FormErrorMessage>
-                    </FormControl>
-                  </Box>
-                  <Box>
-                    <FormControl id="country" isRequired>
-                      <FormLabel>País</FormLabel>
+                    <FormControl id="user" isRequired>
+                      <FormLabel>User type</FormLabel>
                       <Select
                         placeholder="Selecciona opción"
-                        {...register('country')}
+                        {...register('user')}
                       >
-                        <option value="Chile">Chile</option>
-                        <option value="Portugal">Portugal</option>
-                        <option value="España">España</option>
-                        <option value="Francia">Francia</option>
+                        <option value="Player">Player</option>
+                        <option value="Admin">Admin</option>
                       </Select>
                       <FormErrorMessage>
-                        {errors.country && errors.country.message}
+                        {errors.user && errors.user.message}
                       </FormErrorMessage>
                     </FormControl>
                   </Box>
                 </HStack>
-                <FormControl id="description">
-                  <FormLabel>Descripción</FormLabel>
-                  <Textarea {...register('description')} />
+                <FormControl id="text" isRequired>
+                  <FormLabel>Enter command here</FormLabel>
+                  <Textarea {...register('text')} />
                   <FormErrorMessage>
-                    {errors.Descripción && errors.Descripción.message}
+                    {errors.text && errors.text.message}
                   </FormErrorMessage>
                 </FormControl>
                 <Stack spacing={10} pt={2}>
                   <Button
-                    loadingText="Creando..."
+                    loadingText="Loading..."
                     size="lg"
                     bg={'blue.400'}
                     color={'white'}
@@ -115,12 +108,27 @@ export default function NewTeam() {
                       bg: 'blue.500',
                     }}
                   >
-                    Guardar
+                    Send
                   </Button>
                 </Stack>
               </Stack>
             </Box>
           </form>
+          <Box
+              rounded={'lg'}
+              bg={useColorModeValue('white', 'gray.700')}
+              boxShadow={'lg'}
+              p={8}
+            >
+              <Stack spacing={4}>
+                <Heading fontSize={'4xl'} textAlign={'center'}>
+                  {headerText}
+                </Heading>
+                <Heading fontSize={'2xl'} textAlign={'center'}>
+                  {contentText}
+                </Heading>
+              </Stack>
+            </Box>
         </Stack>
       </Flex>
     </Layout>

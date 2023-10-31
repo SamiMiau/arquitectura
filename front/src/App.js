@@ -4,29 +4,13 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 // import Root from "./routes/root";
 // import Players from "./routes/players";
 // import Teams from "./routes/teams";
-import NewTeam from "./NewTeam";
+import Inventory from "./Inventory";
 
 let router = createBrowserRouter([
-  // {
-  //   path: "/",
-  //   element: <Root />,
-  // },
-  // {
-  //   path: "/players",
-  //   element: <Players />,
-  // },
-  // {
-  //   path: "/teams",
-  //   element: <Teams />,
-  // },
   {
-    path: "/teams/new",
-    element: <NewTeam />,
+    path: "/inventory",
+    element: <Inventory />,
   },
-  // {
-  //   path: "*",
-  //   element: <NotFound />,
-  // },
 ]);
 
 if (import.meta.hot) {

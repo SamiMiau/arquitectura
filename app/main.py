@@ -9,12 +9,23 @@ from bson.errors import InvalidId
 from fastapi import FastAPI, Query
 from fastapi import HTTPException
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 
 from .events import Emit
 #from .events import Receive
 
 
 app = FastAPI()
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 mongodb_client = MongoClient("inventory_mongodb", 27017)
 
 emit_events = Emit()
