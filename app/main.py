@@ -127,7 +127,7 @@ def get_all_inventory(user_id: str)-> list[Item]:
 @app.post("/newitem", response_model=Item, tags=["shop"])
 def add_item(item: Item) -> Item:
     """
-    Creates a new user item \n
+    Creates a new item \n
     Returns the item created
     """
     inserted_id = mongodb_client.inventory.shop.insert_one(
@@ -158,61 +158,60 @@ def get_all_items(id: list[int] = Query(None))-> list[Item]:
     return shop_items
     
 
-@app.get("/getitem/{item_id}", response_model=Item, tags=["items"])
-def get_item(item_id: str)-> Item:
+@app.get("/getitem/{item_name}", response_model=Item, tags=["items"])
+def get_item(item_name: str)-> Item:
     """
-    Fetches an item with the given id \n
+    Fetches an item with the given name \n
     Returns the item
     """
-    try:
-        item_id = ObjectId(item_id)
+    try:        
         return Item(
-            **mongodb_client.inventory.shop.find_one({"_id": item_id})
+            **mongodb_client.inventory.shop.find_one({"name": item_name})
         )
     except (InvalidId, TypeError):
         raise HTTPException(status_code=404, detail="Item not found")
     
-@app.put("/updateitem/{item_id}", response_model=Item, tags=["items"])
-def update_item(item_id: str, item: dict)-> Item:
+@app.put("/updateitem/{item_name}", response_model=Item, tags=["items"])
+def update_item(item_name: str, item: dict)-> Item:
     """
-    Updates the item that corresponds with the given id and all of it's parameters  \n
+    Updates the item that corresponds with the given name and all of it's parameters  \n
     Returns the item
     """
-    try:
-        item_id = ObjectId(item_id)
-        item = mongodb_client.inventory.shop.update_one(
-            {'_id': item_id}, {"$set": item})
+    try:      
+        it = get_item(item_name)
+        print(it)
+        item_new = mongodb_client.inventory.shop.update_one(
+            {'_id': ObjectId(it.id)}, {"$set": item})
         
         logging.info(f"✨ Item updated from shop: {item}")
-        emit_events.send(item_id, "update", item)
+        emit_events.send(item_name, "update", item)
 
-        return Item(
-            **mongodb_client.inventory.shop.find_one({"_id": item_id})
-        )
+        return get_item(item["name"])
+            #**mongodb_client.inventory.shop.find_one({"_id": ObjectId(it.id)})
+        
 
     except (InvalidId, TypeError):
         raise HTTPException(status_code=404, detail="Item not found")
     
-@app.delete("/deleteitem/{item_id}", response_model=str, tags=["items"])
-def delete_item(item_id: str) -> str:
+@app.delete("/deleteitem/{item_name}", response_model=str, tags=["items"])
+def delete_item(item_name: str) -> str:
     """
-    Deletes an item with the given id from the shop (it doesn't delete it from players inventory. This could lead to errors and will later be fixed) \n
+    Deletes an item with the given name from the shop (it doesn't delete it from players inventory. This could lead to errors and will later be fixed) \n
     Returns ok if the delete was successful
     """
     try:
-        item_id = ObjectId(item_id)
         item = Item(
-            **mongodb_client.inventory.shop.find_one({"_id": item_id})
+            **mongodb_client.inventory.shop.find_one({"name": item_name})
         )
     except (InvalidId, TypeError):
         raise HTTPException(status_code=404, detail="Item not found")
 
     mongodb_client.inventory.shop.delete_one(
-        {"_id": ObjectId(item_id)}
+        {"_id": ObjectId(item.id)}
     )
 
     logging.info(f"✨ Item deleted from shop: {item}")
-    emit_events.send(item_id, "delete", item.dict())
+    emit_events.send(item_name, "delete", item.dict())
     return 'ok'
 #--------------------------------------------------------------------------Functionalities----------------------------------------------------------
 #updates the items of a user, new_items is a list of Item
@@ -240,10 +239,10 @@ def update_user_items(user_id: str, new_items: list[dict]) -> User:
         raise HTTPException(status_code=404, detail="User not found")
     
 #adds a specific quantity of one item to one user
-@app.post("/{user_id}/{item_id}/{quantity}", response_model=User, tags=["user"])
-def add_item_to_user(user_id: str, item_id: str, quantity:int, action:int) -> User:
+@app.post("/{user_id}/{item_name}/{quantity}", response_model=User, tags=["user"])
+def add_item_to_user(user_id: str, item_name: str, quantity:int, action:int) -> User:
     """
-    Adds the given quantity of an item to the user with the given id \n
+    Adds the given quantity of an item to the user with the given item name \n
     Returns the user
     """
     if quantity<=0:
@@ -253,7 +252,7 @@ def add_item_to_user(user_id: str, item_id: str, quantity:int, action:int) -> Us
         old_items = user.items
         found = False
         for indice in range(len(old_items)):
-            if old_items[indice].id == item_id: #si ya lo tiene, suma la cantidad
+            if old_items[indice].name == item_name: #si ya lo tiene, suma la cantidad
                 found=True
                 break
         if found:
@@ -263,7 +262,7 @@ def add_item_to_user(user_id: str, item_id: str, quantity:int, action:int) -> Us
                 old_items.pop(indice)
             
         else: #si no lo tiene, lo agrega al final de la lista de items
-            new_item = get_item(item_id)
+            new_item = get_item(item_name)
             new_item.quantity=quantity
             old_items.append(new_item)
 
@@ -273,12 +272,12 @@ def add_item_to_user(user_id: str, item_id: str, quantity:int, action:int) -> Us
             new.append(x)
         user2 = update_user_items(user_id, new)
 
-        logging.info(f"✨ {quantity} of item: {item_id} added to inventory for user: {user2}")
+        logging.info(f"✨ {quantity} of item: {item_name} added to inventory for user: {user2}")
         emit_events.send(user_id, "update", user2.dict())
         return user2
 
-@app.post("/buy/{user_id}/{item_id}/{quantity}", response_model=int, tags=["user actions"])
-async def buy(user_id: str, item_id: str, quantity: int) -> int:
+@app.post("/buy/{user_id}/{item_name}/{quantity}", response_model=int, tags=["user actions"])
+async def buy(user_id: str, item_name: str, quantity: int) -> int:
     """
     If the user with the given id has enough gold deletes the gold needed for the buy and adds the item to their inventory \n
     Returns 1 if the purchase was successful, 0 otherwise
@@ -286,24 +285,26 @@ async def buy(user_id: str, item_id: str, quantity: int) -> int:
     if quantity<=0:
         raise HTTPException(status_code=400, detail="Invalid quantity")
     else:
-        total_cost = quantity*get_item(item_id).buy_price
+        item = get_item(item_name)
+        item_id = ObjectId(item.id)
+        total_cost = quantity*item.buy_price
         if get_user(user_id).gold < total_cost :
             #error no hay plata
             return 0
         else:
-            payload = {'user_id':user_id, 'item_id': item_id, 'quantity': quantity, 'gold_spent': total_cost}
-            user = add_item_to_user(user_id, item_id, quantity,1)
+            payload = {'user_id':user_id, 'item_name': item_name, 'quantity': quantity, 'gold_spent': total_cost}
+            user = add_item_to_user(user_id, item_name, quantity,1)
             new_gold = user.gold - total_cost
             user_id = ObjectId(user_id)
             mongodb_client.inventory.users.update_one(
                 {'_id': user_id}, {"$set": {'gold':new_gold}})
             
-            logging.info(f"✨ {quantity} of item: {item_id} purchased by user: {user}")
+            logging.info(f"✨ {quantity} of item: {item_name} purchased by user: {user}")
             emit_events.send(user_id, "purchase", payload)
             return 1
 
-@app.post("/sell/{user_id}/{item_id}/{quantity}", response_model=int, tags=["user actions"])
-async def sell(user_id: str, item_id: str, quantity: int) -> int:
+@app.post("/sell/{user_id}/{item_name}/{quantity}", response_model=int, tags=["user actions"])
+async def sell(user_id: str, item_name: str, quantity: int) -> int:
     """
     If the user with the given id has enough of the item to complete the sale then deletes the required amount of the item from their inventory and adds the corresponding gold \n
     Returns 1 if the sell was successful, 0 otherwise
@@ -313,18 +314,19 @@ async def sell(user_id: str, item_id: str, quantity: int) -> int:
     else:
         user = get_user(user_id)
         for item in user.items:
-            if item.id == item_id:
+            if item.name == item_name:
                 if quantity > item.quantity: 
                     return 0
                 else:
-                    user = add_item_to_user(user_id, item_id, quantity,-1)
-                    price = quantity*get_item(item_id).sell_price
-                    payload = {'user_id':user_id, 'item_id': item_id, 'quantity': quantity, 'gold_earned': price}
+                    item_id = get_item(item_name).id
+                    user = add_item_to_user(user_id, item_name, quantity,-1)
+                    price = quantity*get_item(item_name).sell_price
+                    payload = {'user_id':user_id, 'item_name': item_name, 'quantity': quantity, 'gold_earned': price}
                     new_gold = user.gold + price
                     user_id = ObjectId(user_id)
                     mongodb_client.inventory.users.update_one(
                         {'_id': user_id}, {"$set": {'gold':new_gold}})
-                    logging.info(f"✨ {quantity} of Item: {item_id} sold by user: {user}")
+                    logging.info(f"✨ {quantity} of Item: {item_name} sold by user: {user}")
                     emit_events.send(user_id, "purchase", payload)
                     return 1
         return 0

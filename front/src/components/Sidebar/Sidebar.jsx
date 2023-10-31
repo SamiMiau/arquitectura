@@ -29,11 +29,14 @@ import { Logo } from '../Logo';
 
 
 const LinkItems = [
-  { name: 'Home', route: '/', icon: FiHome },
-  { name: 'Jugadores', route: '/players', icon: FiUser },
-  { name: 'Equipos', route: '/teams', icon: FiUsers },
-  { name: 'Settings', route: '#', icon: FiSettings },
-];
+  { name: 'Sign in', icon: FiHome },
+  { name: 'Sign up', route: '/inventory', icon: FiHome },
+  { name: 'View inventory', route: '/inventory', icon: FiHome },
+  { name: 'View shop', route: '/inventory', icon: FiHome },
+  { name: 'Sell item *item name* *quantity*', route: '/inventory', icon: FiHome },
+  { name: 'Buy item *item name* *quantity*', route: '/inventory', icon: FiHome }
+
+]
 
 export function SidebarWithHeader({ children }) {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -72,7 +75,7 @@ const SidebarContent = ({ onClose, ...rest }) => {
       bg={useColorModeValue('white', 'gray.900')}
       borderRight="1px"
       borderRightColor={useColorModeValue('gray.200', 'gray.700')}
-      w={{ base: 'full', md: 60 }}
+      w={{ base: 'full', md: 400 }}
       pos="fixed"
       h="full"
       {...rest}
@@ -87,7 +90,7 @@ const SidebarContent = ({ onClose, ...rest }) => {
           fontFamily="monospace"
           fontWeight="bold"
         >
-          Demo-app
+          Commands
         </Text>
         <CloseButton display={{ base: 'flex', md: 'none' }} onClick={onClose} />
       </Flex>

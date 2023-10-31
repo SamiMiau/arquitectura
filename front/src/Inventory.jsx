@@ -39,7 +39,7 @@ export default function Inventory() {
   } = useForm();
 
   const onSubmit = async data => {
-    const[header, content] = await command(data.text,data.user,"6540555864259e2dc2ba899b");
+    const[header, content] = await command(data.text,data.user,"65410dac903e29f7a2e3b017");
     setHeaderText(header)
     
     setContentText(content)
