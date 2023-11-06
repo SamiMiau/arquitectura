@@ -24,9 +24,6 @@ import { command } from './commander';
 // import { CREATE_TEAM } from '../api/teams';
 
 export default function Inventory() {
-  //const [createTeam, { loading }] =
-  //  useMutation(CREATE_TEAM);
-
 
   const [headerText, setHeaderText] = React.useState("")
   const [contentText, setContentText] = React.useState("")
@@ -37,23 +34,30 @@ export default function Inventory() {
     register,
     formState: { errors },
   } = useForm();
-
+  let items_list 
   const onSubmit = async data => {
     const[header, content] = await command(data.text,data.user,data.user_name);
     setHeaderText(header)
     
-    if(header=="Your inventory 📦"){
-      console.log("uwu")
-      
-      let item_list = []
-      for(let i = 0; i < content.length; i++){
-        console.log(content[i])
-        item_list.push([content[i]["name"], content[i]["buy_price"], content[i]["sell_price"], content[i]["quantity"], content[i]["description"]])
-      }
-      console.log(item_list)
+    if(header==="Your inventory 📦"){
+      // console.log("inventory selected")
+      // for(let i = 0; i < content.length; i++){
+      //   console.log(content[i])
+      //   items_list.push([content[i]["name"], content[i]["buy_price"], content[i]["sell_price"], content[i]["quantity"], content[i]["description"]])
+      // }
+      // console.log("lista:")
+      // console.log(items_list)
+    }
+    else if(header==="Logged in ✅"){
+      console.log("Log in: ")
+      console.log(content)
+    }
+    else if(header==="Can not log in ❌"){
+      console.log("Not logged: ")
+      console.log(content)
     }
     else{
-      
+      console.log("others selected")
     }
     setContentText(JSON.stringify(content))
     toast({
@@ -63,7 +67,6 @@ export default function Inventory() {
       isClosable: true,
     });
   };
-
   return (
     <Layout>
       <Flex align={'center'} justify={'center'}>
@@ -146,6 +149,10 @@ export default function Inventory() {
                   {headerText}
                 </Heading>
                 <Heading fontSize={'2xl'} textAlign={'center'}>
+                  {/* {[1,2,3].map((item)  => 
+                    <Heading fontSize={'4xl'} textAlign={'center'}>{JSON.stringify(item)}</Heading>
+                    
+                    )} */}
                   {contentText}
                 </Heading>
               </Stack>
