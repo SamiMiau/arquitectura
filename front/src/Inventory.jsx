@@ -28,25 +28,27 @@ export default function Inventory() {
   const [headerText, setHeaderText] = React.useState("")
   const [contentText, setContentText] = React.useState("")
   const toast = useToast();
-
+  const [listado, setListadoText] = React.useState([])
   const {
     handleSubmit,
     register,
     formState: { errors },
   } = useForm();
-  let items_list 
+  
   const onSubmit = async data => {
     const[header, content] = await command(data.text,data.user,data.user_name);
     setHeaderText(header)
     
     if(header==="Your inventory 📦"){
-      // console.log("inventory selected")
-      // for(let i = 0; i < content.length; i++){
-      //   console.log(content[i])
-      //   items_list.push([content[i]["name"], content[i]["buy_price"], content[i]["sell_price"], content[i]["quantity"], content[i]["description"]])
-      // }
-      // console.log("lista:")
-      // console.log(items_list)
+      let items_list =[]
+      console.log("inventory selected")
+      for(let i = 0; i < content.length; i++){
+        console.log(content[i])
+        items_list.push([content[i]["name"], content[i]["buy_price"], content[i]["sell_price"], content[i]["quantity"], content[i]["description"]])
+      }
+      setListadoText(items_list)
+      console.log("lista:")
+      console.log(items_list)
     }
     else if(header==="Logged in ✅"){
       console.log("Log in: ")
@@ -149,11 +151,11 @@ export default function Inventory() {
                   {headerText}
                 </Heading>
                 <Heading fontSize={'2xl'} textAlign={'center'}>
-                  {/* {[1,2,3].map((item)  => 
-                    <Heading fontSize={'4xl'} textAlign={'center'}>{JSON.stringify(item)}</Heading>
+                  {listado.map((item)  => 
+                    <Heading fontSize={'4xl'} textAlign={'center'}>itemcito{item[0]}</Heading>
                     
-                    )} */}
-                  {contentText}
+                    )}
+                  {/* {contentText} */}
                 </Heading>
               </Stack>
             </Box>
