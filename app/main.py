@@ -10,7 +10,7 @@ from fastapi import FastAPI, Query
 from fastapi import HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-
+from pymongo.server_api import ServerApi
 from .events import Emit
 #from .events import Receive
 
@@ -26,7 +26,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-mongodb_client = MongoClient("inventory_mongodb", 27017)
+uri = "mongodb+srv://sami:admin123@granjamarket.lrdnxcq.mongodb.net/?retryWrites=true&w=majority"
+# Create a new client and connect to the server
+mongodb_client = MongoClient(uri, server_api=ServerApi('1'))
+# mongodb_client = MongoClient("inventory_mongodb", 27017)
 
 emit_events = Emit()
 #threading.Thread(target=Receive).start()

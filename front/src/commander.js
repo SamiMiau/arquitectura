@@ -68,8 +68,5 @@ export async function command(text, user, user_name){
               }
             console.log(inventory.data)
         }
-        
     }
-
-
 }
