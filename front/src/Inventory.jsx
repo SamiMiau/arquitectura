@@ -43,8 +43,8 @@ export default function Inventory() {
     if(header==="Your inventory 📦"){
       let items_list =[]
       console.log("inventory selected")
+
       for(let i = 0; i < content.length; i++){
-        console.log(content[i])
         items_list.push([content[i]["name"], content[i]["buy_price"], content[i]["sell_price"], content[i]["quantity"], content[i]["description"]])
       }
       setListadoText(items_list)
@@ -52,8 +52,8 @@ export default function Inventory() {
     else if(header==="Shop 💰🛒"){
       let items_list =[]
       console.log("shop selected")
+
       for(let i = 0; i < content.length; i++){
-        console.log(content[i])
         items_list.push([content[i]["name"], content[i]["buy_price"], content[i]["sell_price"], content[i]["quantity"], content[i]["description"]])
       }
       setListadoText(items_list)
@@ -70,7 +70,6 @@ export default function Inventory() {
       console.log("others selected")
       setListadoText(content)
     }
-    setContentText(JSON.stringify(content))
     toast({
       title: 'Submitted',
       status: 'success',
@@ -161,7 +160,7 @@ export default function Inventory() {
                 </Heading>
                 <Heading fontSize={'2xl'} textAlign={'center'}>
                   {listado.map((item)  => 
-                    <Heading fontSize={'4xl'} textAlign={'center'}>itemcito:{item}</Heading>
+                    <Heading fontSize={'1xl'} textAlign={'left'}>Item:{JSON.stringify(item[0])} Buy price:{JSON.stringify(item[1])} Sell price:{JSON.stringify(item[2])} Quantity:{JSON.stringify(item[3])} Description:{JSON.stringify(item[4])}</Heading>
                     
                     )}
                   {/* {contentText} */}

@@ -13,7 +13,7 @@ export async function command(text, user, user_name){
     else if(text==="view shop"){
         const inventory = await axios.get(`http://localhost:5003/market`)
         console.log(inventory.data)
-        return ["Shop 💰🛒", JSON.stringify(inventory.data)]
+        return ["Shop 💰🛒", inventory.data]
     }
     // else if(command==="view plants"){
     //     console.log("view plantsss")
