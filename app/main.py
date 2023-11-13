@@ -169,7 +169,7 @@ def get_all_items(id: list[str] = Query(None))-> list[Item]:
         filters['_id'] = {"$in": [ObjectId(_id) for _id in id]}
 
     shop_items = [Item(**item).dict() for item in mongodb_client.inventory.shop.find(filters)]
-    if len(shop_items):
+    if len(shop_items) == 0:
         raise HTTPException(status_code=404, detail="Items not found")
     else:
         return shop_items
