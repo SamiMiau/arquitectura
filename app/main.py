@@ -11,7 +11,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo.server_api import ServerApi
-from .events import Emit
+from events import Emit
 #from .events import Receive
 
 
@@ -159,7 +159,7 @@ def add_item(item: Item) -> Item:
     return new_item
 
 @app.get("/market", response_model=list[Item], tags=["shop"])
-def get_all_items(id: list[int] = Query(None))-> list[Item]:
+def get_all_items(id: list[str] = Query(None))-> list[Item]:
     """
     Fetches all of the items that exist (for now we assume all of the items are on the shop) \n
     Returns a list of items
