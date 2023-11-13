@@ -31,7 +31,7 @@ uri = "mongodb+srv://sami:admin123@granjamarket.lrdnxcq.mongodb.net/?retryWrites
 mongodb_client = MongoClient(uri, server_api=ServerApi('1'))
 # mongodb_client = MongoClient("inventory_mongodb", 27017)
 
-emit_events = Emit()
+# emit_events = Emit()
 #threading.Thread(target=Receive).start()
 
 logging.basicConfig(level=logging.INFO,
@@ -100,7 +100,7 @@ def add_user(user_name: str) -> User:
         )
     )
     logging.info(f"✨ New user created: {user}")
-    emit_events.send(inserted_id, "create", new_user.dict())
+    # emit_events.send(inserted_id, "create", new_user.dict())
     return new_user
 
 @app.get("/getuser/{user_id}", response_model=User, tags=["user"])
@@ -155,7 +155,7 @@ def add_item(item: Item) -> Item:
         )
     )
     logging.info(f"✨ New item created on the shop: {new_item}")
-    emit_events.send(inserted_id, "create", new_item.dict())
+    # emit_events.send(inserted_id, "create", new_item.dict())
     return new_item
 
 @app.get("/market", response_model=list[Item], tags=["shop"])
@@ -199,7 +199,7 @@ def update_item(item_name: str, item: dict)-> Item:
             {'_id': ObjectId(it.id)}, {"$set": item})
         
         logging.info(f"✨ Item updated from shop: {item}")
-        emit_events.send(item_name, "update", item)
+        # emit_events.send(item_name, "update", item)
 
         return get_item(item["name"])
             #**mongodb_client.inventory.shop.find_one({"_id": ObjectId(it.id)})
@@ -226,7 +226,7 @@ def delete_item(item_name: str) -> str:
     )
 
     logging.info(f"✨ Item deleted from shop: {item}")
-    emit_events.send(item_name, "delete", item.dict())
+    # emit_events.send(item_name, "delete", item.dict())
     return 'ok'
 #--------------------------------------------------------------------------Functionalities----------------------------------------------------------
 #updates the items of a user, new_items is a list of Item
@@ -246,7 +246,7 @@ def update_user_items(user_id: str, new_items: list[dict]) -> User:
         )
 
         logging.info(f"✨ Inventory items updated for user: {user}")
-        emit_events.send(user_id, "update", user.dict())
+        # emit_events.send(user_id, "update", user.dict())
 
         return user
 
@@ -288,7 +288,7 @@ def add_item_to_user(user_id: str, item_name: str, quantity:int, action:int) -> 
         user2 = update_user_items(user_id, new)
 
         logging.info(f"✨ {quantity} of item: {item_name} added to inventory for user: {user2}")
-        emit_events.send(user_id, "update", user2.dict())
+        # emit_events.send(user_id, "update", user2.dict())
         return user2
 
 @app.post("/buy/{user_id}/{item_name}/{quantity}", response_model=int, tags=["user actions"])
@@ -315,7 +315,7 @@ async def buy(user_id: str, item_name: str, quantity: int) -> int:
                 {'_id': user_id}, {"$set": {'gold':new_gold}})
             
             logging.info(f"✨ {quantity} of item: {item_name} purchased by user: {user}")
-            emit_events.send(user_id, "purchase", payload)
+            # emit_events.send(user_id, "purchase", payload)
             return 1
 
 @app.post("/sell/{user_id}/{item_name}/{quantity}", response_model=int, tags=["user actions"])
@@ -342,6 +342,6 @@ async def sell(user_id: str, item_name: str, quantity: int) -> int:
                     mongodb_client.inventory.users.update_one(
                         {'_id': user_id}, {"$set": {'gold':new_gold}})
                     logging.info(f"✨ {quantity} of Item: {item_name} sold by user: {user}")
-                    emit_events.send(user_id, "purchase", payload)
+                    # emit_events.send(user_id, "purchase", payload)
                     return 1
         return 0
