@@ -15,12 +15,12 @@ export async function command(text, user, user_name){
         console.log(inventory.data)
         return ["Shop 💰🛒", inventory.data]
     }
-    // else if(command==="view plants"){
-    //     console.log("view plantsss")
-    //     const inventory = await axios.get(`http://localhost:5001/plants`) //lista de diccionarios, donde cada diccionario es un usuario, se supone conecta a granja
-    //     console.log(inventory.data)
-    //     return ["Plants available 🍉", "inventory.data"]
-    // }
+    else if(command==="view plants"){
+        console.log("view plantsss")
+        const inventory = await axios.get('http://granja_service/plants') //lista de diccionarios, donde cada diccionario es un usuario, se supone conecta a granja
+        console.log(inventory.data)
+        return ["Plants available 🍉", "intento de conectar a granja"]
+    }
     
     else{
         const command = text.split(" ")[0]
