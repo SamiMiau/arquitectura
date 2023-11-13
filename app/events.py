@@ -28,4 +28,3 @@ class Emit:
 
     def close(self):
         self.connection.close()
-
