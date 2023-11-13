@@ -11,7 +11,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo.server_api import ServerApi
-from events import Emit
+# from events import Emit
 #from .events import Receive
 
 
