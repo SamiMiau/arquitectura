@@ -74,10 +74,37 @@ def test_add_item():
     assert data["quantity"] == 1
     assert data["description"] == "Test Description"
 
-def test_get_all_items_successful():
+def test_get_all_items_successful_all():
     response = client.get("/market")
     assert response.status_code == 200
     assert type(response.json()[0]) == dict
+def test_get_all_items_successful_list():
+    response = client.get("/market?id=65516ccbd1694e37ed09683e&id=65516da0d1694e37ed09683f")
+    assert response.status_code == 200
+    assert response.json() == [
+  {
+    "id": "65516ccbd1694e37ed09683e",
+    "name": "Strawberry",
+    "buy_price": 50,
+    "sell_price": 10,
+    "quantity": 1,
+    "description": "Nice and sweet!!"
+  },
+  {
+    "id": "65516da0d1694e37ed09683f",
+    "name": "Pear",
+    "buy_price": 100,
+    "sell_price": 50,
+    "quantity": 1,
+    "description": "Perame tantito"
+  }
+]
+def test_get_all_items_unsuccessful_list():
+    response = client.get("/market?id=75516da0d1694e37ed09683f")
+    assert response.status_code == 404
+    assert response.json() == {
+        "detail": "Items not found"
+    }
 
 # def test_get_item():
 #     response = client.get("/getitem/{item_name}")
